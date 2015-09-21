@@ -38,7 +38,7 @@ public class GenerateFormulaID {
 				//first is null
 				ifFirst = false;
 			}else{
-				out.println(i+","+s[0]);
+				out.println(i+"_|_"+s[0]);
 				out_1.println(i+","+s[1]);
 				i++;
 			}
