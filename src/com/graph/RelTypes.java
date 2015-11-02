@@ -7,6 +7,6 @@ import org.neo4j.graphdb.RelationshipType;
  *
  */
 public enum RelTypes implements RelationshipType{
-	Related,Contributed_by,Cite,Co_occurrence,Have,Sim,Assigned_to;
+	Category,Link,Co_occurrence,In;
       
 }

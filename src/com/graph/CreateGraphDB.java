@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.neo4j.graphdb.DynamicLabel;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -74,28 +76,11 @@ public class CreateGraphDB {
 
 		// create wiki index
 		IndexDefinition wiki_indexDefinition;
-		IndexDefinition video_indexDefinition;
-		IndexDefinition slides_indexDefinition;
-		IndexDefinition sourcecode_indexDefinition;
 		try (Transaction tx = graphDb.beginTx()) {
 			Schema schema = graphDb.schema();
 			// wiki
 			wiki_indexDefinition = schema.indexFor(DynamicLabel.label("wiki"))
 					.on("id").create();
-			//schema.awaitIndexOnline(wiki_indexDefinition, 10, TimeUnit.SECONDS);
-			// video
-			video_indexDefinition = schema
-					.indexFor(DynamicLabel.label("video")).on("id").create();
-			//schema.awaitIndexOnline(video_indexDefinition, 10, TimeUnit.SECONDS);
-			// slides
-			slides_indexDefinition = schema
-					.indexFor(DynamicLabel.label("slides")).on("id").create();
-			//schema.awaitIndexOnline(slides_indexDefinition, 10,TimeUnit.SECONDS);
-			// sourcecode
-			sourcecode_indexDefinition = schema
-					.indexFor(DynamicLabel.label("sourcecode")).on("id")
-					.create();
-			//schema.awaitIndexOnline(sourcecode_indexDefinition, 10,TimeUnit.SECONDS);
 
 			tx.success();
 		}
@@ -107,26 +92,33 @@ public class CreateGraphDB {
 			// START SNIPPET: addData
 
 			// Create some nodes and index their ids with the IndexService
-			System.out.println("adding resources...");
-			addResourceNodesWithIndexing();
+			System.out.println("adding wiki pages...");
+			addWikiNodesWithIndexing();
 
 			tx.success();
 		}
 
 		try (Transaction tx = graphDb.beginTx()) {
 			// Add resource relationship
-			System.out.println("adding resource relations...");
-			addResourceRelations();
+			System.out.println("adding wiki category relations...");
+			addWikiCategoryRelations();
+			tx.success();
+		}
+		
+		try (Transaction tx = graphDb.beginTx()) {
+			// Add resource relationship
+			System.out.println("adding wiki link relations...");
+			addWikiLinkRelations();
 			tx.success();
 		}
 
-		// create keyword index
-		IndexDefinition keyword_indexDefinition;
+		// create formula index
+		IndexDefinition formula_indexDefinition;
 		try (Transaction tx = graphDb.beginTx()) {
 			Schema schema = graphDb.schema();
 			// keyword
-			keyword_indexDefinition = schema
-					.indexFor(DynamicLabel.label("keywords")).on("id").create();
+			formula_indexDefinition = schema
+					.indexFor(DynamicLabel.label("formula")).on("id").create();
 			//schema.awaitIndexOnline(keyword_indexDefinition, 10,TimeUnit.SECONDS);
 
 			tx.success();
@@ -134,147 +126,24 @@ public class CreateGraphDB {
 
 		try (Transaction tx = graphDb.beginTx()) {
 			// Add keywords
-			System.out.println("adding keywords...");
-			addKeywordsNodesWithIndexing();
+			System.out.println("adding formula...");
+			addFormulaNodesWithIndexing();
 
 			tx.success();
 		}
 
 		try (Transaction tx = graphDb.beginTx()) {
 			// Add relationship
-			System.out.println("adding keywords relations...");
-			addKeywordsRelations();
+			System.out.println("adding formula wiki relations...");
+			addFormulaWikiRelations();
 
 			tx.success();
 		}
-
-		// create paper index
-		IndexDefinition paper_indexDefinition;
+		
 		try (Transaction tx = graphDb.beginTx()) {
-			Schema schema = graphDb.schema();
-			// keyword
-			paper_indexDefinition = schema
-					.indexFor(DynamicLabel.label("paper")).on("id").create();
-			//schema.awaitIndexOnline(paper_indexDefinition, 10,TimeUnit.SECONDS);
-
-			tx.success();
-		}
-
-		try (Transaction tx = graphDb.beginTx()) {
-			// Add papers
-			System.out.println("adding papers...");
-			addPaperNodesWithIndexing();
-
-			tx.success();
-		}
-
-		try (Transaction tx = graphDb.beginTx()) {
-			// Add paper cite paper
-			System.out.println("adding paper cite relations...");
-			addPaperCiteRelations();
-
-			tx.success();
-		}
-
-		try (Transaction tx = graphDb.beginTx()) {
-			// Add paper relate to keyword
-			System.out.println("adding paper keywords relations...");
-			addPaperKeywordRelations();
-
-			tx.success();
-		}
-
-		try (Transaction tx = graphDb.beginTx()) {
-			// Add paper contribute keyword
-			System.out.println("adding paper contribute keywords relations...");
-			addPaperContributeKeywordRelations();
-
-			tx.success();
-		}
-
-		try (Transaction tx = graphDb.beginTx()) {
-			// Add keyword cite keyword
-			System.out.println("adding keyword cite keywords relations...");
-			addKeywordCiteKeywordRelations();
-
-			tx.success();
-		}
-
-		try (Transaction tx = graphDb.beginTx()) {
-			// Add keyword co keyword
-			System.out.println("adding keyword co keywords relations...");
-			addKeywordCoKeywordRelations();
-
-			tx.success();
-		}
-
-		try (Transaction tx = graphDb.beginTx()) {
-			// Add keyword similarity keyword
-			System.out.println("adding keyword similarity slides relations...");
-			addKeywordSimSlidesRelations();
-
-			tx.success();
-		}
-
-		try (Transaction tx = graphDb.beginTx()) {
-			// Add keyword similarity sourcecode
-			System.out
-					.println("adding keyword similarity sourcecode relations...");
-			addKeywordSimSourcecodeRelations();
-
-			tx.success();
-		}
-
-		try (Transaction tx = graphDb.beginTx()) {
-			// Add keyword similarity video
-			System.out.println("adding keyword similarity video relations...");
-			addKeywordSimVideoRelations();
-
-			tx.success();
-		}
-
-		try (Transaction tx = graphDb.beginTx()) {
-			// Add keyword similarity wiki
-			System.out.println("adding keyword similarity wiki relations...");
-			addKeywordSimWikiRelations();
-
-			tx.success();
-		}
-
-		// START SNIPPET: transaction
-		try (Transaction tx = graphDb.beginTx()) {
-			// Database operations go here
-			// END SNIPPET: transaction
-			// START SNIPPET: addData
-
-			// Create some nodes and index their ids with the IndexService
-			System.out.println("adding paper sim slides resources...");
-			addPaperSimSlidesRelations();
-
-			tx.success();
-		}
-
-		try (Transaction tx = graphDb.beginTx()) {
-			// Add keyword similarity sourcecode
-			System.out
-					.println("adding paper similarity sourcecode relations...");
-			addPaperSimSourcecodeRelations();
-
-			tx.success();
-		}
-
-		try (Transaction tx = graphDb.beginTx()) {
-			// Add keyword similarity video
-			System.out.println("adding keyword similarity video relations...");
-			addPaperSimVideoRelations();
-
-			tx.success();
-		}
-
-		try (Transaction tx = graphDb.beginTx()) {
-			// Add keyword similarity wiki
-			System.out.println("adding keyword similarity wiki relations...");
-			addPaperSimWikiRelations();
+			// Add relationship
+			System.out.println("adding formula formula co_occurrence relations...");
+			addFormulaCoFormulaRelations();
 
 			tx.success();
 		}
@@ -314,29 +183,44 @@ public class CreateGraphDB {
 	// END SNIPPET: shutdownHook
 
 	/**
-	 * add resource nodes with indexing
+	 * add Wikipedia page nodes with indexing
 	 */
-	public static void addResourceNodesWithIndexing() {
+	public static void addWikiNodesWithIndexing() {
 		String readline = "";
 		try {
 			BufferedReader bin = new BufferedReader(new InputStreamReader(
 					new FileInputStream(filePath + File.separator
-							+ "rsource.dat")));
+							+ "wikiid_timestamp.dat")));
+			Map<String,String> wikiMap =  new HashMap<String,String>();
+			while ((readline = bin.readLine()) != null) {
+				String s[] = readline.split(",");
+				String id = s[0];
+				String time = s[1];
+				wikiMap.put(id, time);
+			}
+			bin.close();
+			bin = new BufferedReader(new InputStreamReader(
+					new FileInputStream(filePath + File.separator
+							+ "wiki_ids.dat")));
 			int i = 0;
 			while ((readline = bin.readLine()) != null) {
 				String s[] = readline.split("_\\|_");
-				String ids[] = s[0].split("_");
-				String id = "Res_" + ids[1];
+				String id = s[0];
 				String title = s[1];
-				String type = s[2];
-				Label label = DynamicLabel.label(type);
-				Node node = graphDb.createNode(label);
-				node.setProperty("id", id);
-				node.setProperty("title", title);
-				i++;
-				if (i % 100000 == 0) {
-					System.out.println(i);
+				if(wikiMap.get(id)!=null){
+					Label label = DynamicLabel.label("wiki");
+					Node node = graphDb.createNode(label);
+					node.setProperty("id", "W_"+id);
+					node.setProperty("title", title);
+					node.setProperty("time", wikiMap.get(id));
+					i++;
+					if (i % 100000 == 0) {
+						System.out.println(i);
+					}
+				}else{
+					System.out.println(id);
 				}
+				
 			}
 			bin.close();
 		} catch (Exception e) {
@@ -346,29 +230,71 @@ public class CreateGraphDB {
 	}
 
 	/**
-	 * add resource nodes with indexing
+	 * add Wikipedia category relation
 	 */
-	public static void addResourceRelations() {
+	public static void addWikiCategoryRelations() {
 		String readline = "";
 		try {
 			BufferedReader bin = new BufferedReader(new InputStreamReader(
 					new FileInputStream(filePath + File.separator
-							+ "r-rsource.dat")));
-
+							+ "wiki_categories.dat")));
 			int i = 0;
 			while ((readline = bin.readLine()) != null) {
 				String s[] = readline.split(",");
-				String ids0[] = s[0].split("_");
-				String fromID = "Res_" + ids0[1];
-				String ids1[] = s[1].split("_");
-				String toID = "Res_" + ids1[1];
-				String type = s[3];
-				Label label = DynamicLabel.label(type);
+				String fromID = "W_" + s[0];
+				String toID = "W_" + s[1];
+				Label label = DynamicLabel.label("wiki");
 				Node foundFrom = graphDb.findNode(label, "id", fromID);
 				Node foundTo = graphDb.findNode(label, "id", toID);
 				if (foundFrom != null && foundTo != null) {
 					Relationship relationship = foundFrom.createRelationshipTo(
-							foundTo, RelTypes.Related);
+							foundTo, RelTypes.Category);
+					relationship
+							.setProperty("weight", Double.parseDouble(s[2]));
+					i++;
+				} else {
+					if(foundFrom!=null){
+						System.out.println("fromID:" + fromID);
+					}
+					if(toID!=null){
+						System.out.println("toID" + toID);
+					}
+					System.out.println("fromID:" + fromID + " toID" + toID);
+				}
+
+				if (i % 100000 == 0) {
+					System.out.println(i);
+				}
+			}
+			bin.close();
+		} catch (Exception e) {
+			System.out.println(readline);
+			e.printStackTrace();
+		}
+
+	}
+	
+	/**
+	 * add Wikipedia link relation
+	 */
+	public static void addWikiLinkRelations() {
+		String readline = "";
+		try {
+			BufferedReader bin = new BufferedReader(new InputStreamReader(
+					new FileInputStream(filePath + File.separator
+							+ "wiki_links.dat")));
+
+			int i = 0;
+			while ((readline = bin.readLine()) != null) {
+				String s[] = readline.split(",");
+				String fromID = "W_" + s[0];
+				String toID = "W_" + s[1];
+				Label label = DynamicLabel.label("wiki");
+				Node foundFrom = graphDb.findNode(label, "id", fromID);
+				Node foundTo = graphDb.findNode(label, "id", toID);
+				if (foundFrom != null && foundTo != null) {
+					Relationship relationship = foundFrom.createRelationshipTo(
+							foundTo, RelTypes.Link);
 					relationship
 							.setProperty("weight", Double.parseDouble(s[2]));
 					i++;
@@ -389,23 +315,23 @@ public class CreateGraphDB {
 	}
 
 	/**
-	 * add keywords nodes with indexing
+	 * add formula nodes with indexing
 	 */
-	public static void addKeywordsNodesWithIndexing() {
+	public static void addFormulaNodesWithIndexing() {
 		try {
 			BufferedReader bin = new BufferedReader(new InputStreamReader(
 					new FileInputStream(filePath + File.separator
-							+ "keywords.dat")));
+							+ "formula_id.dat")));
 			String readline = "";
 			int i = 0;
 			while ((readline = bin.readLine()) != null) {
-				String s[] = readline.split(",");
-				String id = s[0];
+				String s[] = readline.split("_\\|_");
+				String id = "F_"+s[0];
 				String title = s[1];
-				Label label = DynamicLabel.label("keywords");
+				Label label = DynamicLabel.label("formula");
 				Node node = graphDb.createNode(label);
 				node.setProperty("id", id);
-				node.setProperty("title", title);
+				node.setProperty("content", title);
 				i++;
 				if (i % 100000 == 0) {
 					System.out.println(i);
@@ -418,27 +344,25 @@ public class CreateGraphDB {
 	}
 
 	/**
-	 * add resource nodes with indexing
+	 * add Formula Wiki Relations
 	 */
-	public static void addKeywordsRelations() {
+	public static void addFormulaWikiRelations() {
 		try {
 			BufferedReader bin = new BufferedReader(new InputStreamReader(
 					new FileInputStream(filePath + File.separator
-							+ "r-keywords.dat")));
+							+ "fid2wikiid.dat")));
 			String readline = "";
 			int i = 0;
 			while ((readline = bin.readLine()) != null) {
 				String s[] = readline.split(",");
-				String ids0[] = s[0].split("_");
-				String fromID = "Res_" + ids0[1];
-				String toID = s[1];
-				String resType = s[3];
-				Label res_label = DynamicLabel.label(resType);
-				Label k_label = DynamicLabel.label("keywords");
-				Node foundFrom = graphDb.findNode(res_label, "id", fromID);
-				Node foundTo = graphDb.findNode(k_label, "id", toID);
+				String fromID = "F_" + s[0];
+				String toID = "W_"+s[1];
+				Label wiki_label = DynamicLabel.label("wiki");
+				Label f_label = DynamicLabel.label("formula");
+				Node foundFrom = graphDb.findNode(f_label, "id", fromID);
+				Node foundTo = graphDb.findNode(wiki_label, "id", toID);
 				Relationship relationship = foundFrom.createRelationshipTo(
-						foundTo, RelTypes.Related);
+						foundTo, RelTypes.In);
 				relationship.setProperty("weight", Double.parseDouble(s[2]));
 				i++;
 				if (i % 100000 == 0) {
@@ -450,29 +374,27 @@ public class CreateGraphDB {
 			e.printStackTrace();
 		}
 	}
-
+	
 	/**
-	 * add paper nodes with indexing
+	 * add Formula Co Formula
 	 */
-	public static void addPaperNodesWithIndexing() {
-		String readline = "";
+	public static void addFormulaCoFormulaRelations() {
 		try {
 			BufferedReader bin = new BufferedReader(new InputStreamReader(
 					new FileInputStream(filePath + File.separator
-							+ "papers.dat")));
+							+ "fcof.dat")));
+			String readline = "";
 			int i = 0;
 			while ((readline = bin.readLine()) != null) {
 				String s[] = readline.split(",");
-				String id = s[1];
-				String acmID = s[3];
-				String year = s[5];
-				Label label = DynamicLabel.label("paper");
-				Node node = graphDb.createNode(label);
-				String ids[] = id.split("_");
-				
-				node.setProperty("id", "P_"+ids[1]);
-				node.setProperty("acmID", acmID);
-				node.setProperty("year", year);
+				String fromID = "F_" + s[0];
+				String toID = "F_"+s[1];
+				Label f_label = DynamicLabel.label("formula");
+				Node foundFrom = graphDb.findNode(f_label, "id", fromID);
+				Node foundTo = graphDb.findNode(f_label, "id", toID);
+				Relationship relationship = foundFrom.createRelationshipTo(
+						foundTo, RelTypes.Co_occurrence);
+				relationship.setProperty("weight", Double.parseDouble(s[2]));
 				i++;
 				if (i % 100000 == 0) {
 					System.out.println(i);
@@ -480,537 +402,6 @@ public class CreateGraphDB {
 			}
 			bin.close();
 		} catch (Exception e) {
-			System.out.println(readline);
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * add paper cite paper relation with indexing
-	 */
-	public static void addPaperCiteRelations() {
-		String readline = "";
-		try {
-			BufferedReader bin = new BufferedReader(new InputStreamReader(
-					new FileInputStream(filePath + File.separator
-							+ "paper-cite-paper.dat")));
-
-			int i = 0;
-			while ((readline = bin.readLine()) != null) {
-				String s[] = readline.split(",");
-				String fids[] = s[2].split("_");
-				String fromID = "P_"+fids[1];
-				String tids[] = s[3].split("_");
-				String toID = "P_"+tids[1];
-				Label label = DynamicLabel.label("paper");
-				Node foundFrom = graphDb.findNode(label, "id", fromID);
-				Node foundTo = graphDb.findNode(label, "id", toID);
-				if (foundFrom != null && foundTo != null) {
-					Relationship relationship = foundFrom.createRelationshipTo(
-							foundTo, RelTypes.Cite);
-					relationship
-							.setProperty("weight", Double.parseDouble(s[1]));
-					relationship.setProperty("count", Integer.parseInt(s[4]));
-					i++;
-				} else {
-					System.out.println("fromID:" + fromID + " toID" + toID);
-				}
-
-				if (i % 100000 == 0) {
-					System.out.println(i);
-				}
-			}
-			bin.close();
-		} catch (Exception e) {
-			System.out.println(readline);
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * add paper relate keyword relation with indexing
-	 */
-	public static void addPaperKeywordRelations() {
-		String readline = "";
-		try {
-			BufferedReader bin = new BufferedReader(new InputStreamReader(
-					new FileInputStream(filePath + File.separator
-							+ "paper-topic.dat")));
-
-			int i = 0;
-			while ((readline = bin.readLine()) != null) {
-				String s[] = readline.split(",");
-				String fromID = s[2];
-				String toID = s[3];
-				Label fromlabel = DynamicLabel.label("paper");
-				Label tolabel = DynamicLabel.label("keywords");
-				Node foundFrom = graphDb.findNode(fromlabel, "id", fromID);
-				Node foundTo = graphDb.findNode(tolabel, "id", toID);
-				if (foundFrom != null && foundTo != null) {
-					Relationship relationship = foundFrom.createRelationshipTo(
-							foundTo, RelTypes.Have);
-					relationship
-							.setProperty("weight", Double.parseDouble(s[1]));
-					i++;
-				} else {
-					System.out.println("fromID:" + fromID + " toID" + toID);
-				}
-
-				if (i % 100000 == 0) {
-					System.out.println(i);
-				}
-			}
-			bin.close();
-		} catch (Exception e) {
-			System.out.println(readline);
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * add paper contribute keyword relation with indexing
-	 */
-	public static void addPaperContributeKeywordRelations() {
-		String readline = "";
-		try {
-			BufferedReader bin = new BufferedReader(new InputStreamReader(
-					new FileInputStream(filePath + File.separator
-							+ "paper-topic-contribute.dat")));
-
-			int i = 0;
-			while ((readline = bin.readLine()) != null) {
-				String s[] = readline.split(",");
-				String fromID = s[3];
-				String toID = s[2];
-				
-				Label tolabel = DynamicLabel.label("paper");
-				Label fromlabel = DynamicLabel.label("keywords");
-				Node foundFrom = graphDb.findNode(fromlabel, "id", fromID);
-				Node foundTo = graphDb.findNode(tolabel, "id", toID);
-				if (foundFrom != null && foundTo != null) {
-					Relationship relationship = foundFrom.createRelationshipTo(
-							foundTo, RelTypes.Contributed_by);
-					relationship
-							.setProperty("weight", Double.parseDouble(s[1]));
-					i++;
-				} else {
-					System.out.println("fromID:" + fromID + " toID" + toID);
-				}
-
-				if (i % 100000 == 0) {
-					System.out.println(i);
-				}
-			}
-			bin.close();
-		} catch (Exception e) {
-			System.out.println(readline);
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * add keyword cite keyword relation with indexing
-	 */
-	public static void addKeywordCiteKeywordRelations() {
-		String readline = "";
-		try {
-			BufferedReader bin = new BufferedReader(new InputStreamReader(
-					new FileInputStream(filePath + File.separator
-							+ "topic-cite-topic.dat")));
-
-			int i = 0;
-			while ((readline = bin.readLine()) != null) {
-				String s[] = readline.split(",");
-				String fromID = "K_" + s[0];
-				String toID = "K_" + s[1];
-				
-				Label label = DynamicLabel.label("keywords");
-				Node foundFrom = graphDb.findNode(label, "id", fromID);
-				Node foundTo = graphDb.findNode(label, "id", toID);
-				
-				if (foundFrom != null && foundTo != null) {
-					Relationship relationship = foundFrom.createRelationshipTo(
-							foundTo, RelTypes.Cite);
-					relationship
-							.setProperty("weight", Double.parseDouble(s[2]));
-					i++;
-				} else {
-					System.out.println("fromID:" + fromID + " toID" + toID);
-				}
-
-				if (i % 100000 == 0) {
-					System.out.println(i);
-				}
-			}
-			bin.close();
-		} catch (Exception e) {
-			System.out.println(readline);
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * add keyword co paper keyword with indexing
-	 */
-	public static void addKeywordCoKeywordRelations() {
-		String readline = "";
-		try {
-			BufferedReader bin = new BufferedReader(new InputStreamReader(
-					new FileInputStream(filePath + File.separator
-							+ "topic-co-topic.dat")));
-
-			int i = 0;
-			while ((readline = bin.readLine()) != null) {
-				String s[] = readline.split(",");
-				String fromID = "K_" + s[0];
-				String toID = "K_" + s[1];
-				Label label = DynamicLabel.label("keywords");
-				Node foundFrom = graphDb.findNode(label, "id", fromID);
-				Node foundTo = graphDb.findNode(label, "id", toID);
-				if (foundFrom != null && foundTo != null) {
-					Relationship relationship = foundFrom.createRelationshipTo(
-							foundTo, RelTypes.Co_occurrence);
-					relationship
-							.setProperty("weight", Double.parseDouble(s[2]));
-					i++;
-				} else {
-					System.out.println("fromID:" + fromID + " toID" + toID);
-				}
-
-				if (i % 100000 == 0) {
-					System.out.println(i);
-				}
-			}
-			bin.close();
-		} catch (Exception e) {
-			System.out.println(readline);
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * add keyword similarity slides with indexing
-	 */
-	public static void addKeywordSimSlidesRelations() {
-		String readline = "";
-		try {
-			BufferedReader bin = new BufferedReader(new InputStreamReader(
-					new FileInputStream(filePath + File.separator
-							+ "keyword_slides.dat")));
-			int i = 0;
-			while ((readline = bin.readLine()) != null) {
-				String s[] = readline.split(",");
-				String fromID = s[0];
-				for (int j = 1; j < s.length; j = j + 2) {
-					String toID = s[j];
-					Label fromlabel = DynamicLabel.label("keywords");
-					Label tolabel = DynamicLabel.label("slides");
-					Node foundFrom = graphDb.findNode(fromlabel, "id", fromID);
-					Node foundTo = graphDb.findNode(tolabel, "id", toID);
-					if (foundFrom != null && foundTo != null) {
-						Relationship relationship = foundFrom
-								.createRelationshipTo(foundTo, RelTypes.Sim);
-						relationship.setProperty("weight",
-								Double.parseDouble(s[j + 1]));
-						i++;
-					} else {
-						System.out.println("fromID:" + fromID + " toID" + toID);
-					}
-					if (i % 100000 == 0) {
-						System.out.println(i);
-					}
-				}
-
-			}
-			bin.close();
-		} catch (Exception e) {
-			System.out.println(readline);
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * add keyword similarity sourcecode with indexing
-	 */
-	public static void addKeywordSimSourcecodeRelations() {
-		String readline = "";
-		try {
-			BufferedReader bin = new BufferedReader(new InputStreamReader(
-					new FileInputStream(filePath + File.separator
-							+ "keyword_sourcecode.dat")));
-			int i = 0;
-			while ((readline = bin.readLine()) != null) {
-				String s[] = readline.split(",");
-				String fromID = s[0];
-				for (int j = 1; j < s.length; j = j + 2) {
-					String toID = s[j];
-					Label fromlabel = DynamicLabel.label("keywords");
-					Label tolabel = DynamicLabel.label("sourcecode");
-					Node foundFrom = graphDb.findNode(fromlabel, "id", fromID);
-					Node foundTo = graphDb.findNode(tolabel, "id", toID);
-					if (foundFrom != null && foundTo != null) {
-						Relationship relationship = foundFrom
-								.createRelationshipTo(foundTo, RelTypes.Sim);
-						relationship.setProperty("weight",
-								Double.parseDouble(s[j + 1]));
-						i++;
-					} else {
-						System.out.println("fromID:" + fromID + " toID" + toID);
-					}
-					if (i % 100000 == 0) {
-						System.out.println(i);
-					}
-				}
-
-			}
-			bin.close();
-		} catch (Exception e) {
-			System.out.println(readline);
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * add keyword similarity video with indexing
-	 */
-	public static void addKeywordSimVideoRelations() {
-		String readline = "";
-		try {
-			BufferedReader bin = new BufferedReader(new InputStreamReader(
-					new FileInputStream(filePath + File.separator
-							+ "keyword_video.dat")));
-			int i = 0;
-			while ((readline = bin.readLine()) != null) {
-				String s[] = readline.split(",");
-				String fromID = s[0];
-				for (int j = 1; j < s.length; j = j + 2) {
-					String toID = s[j];
-					Label fromlabel = DynamicLabel.label("keywords");
-					Label tolabel = DynamicLabel.label("video");
-					Node foundFrom = graphDb.findNode(fromlabel, "id", fromID);
-					Node foundTo = graphDb.findNode(tolabel, "id", toID);
-					if (foundFrom != null && foundTo != null) {
-						Relationship relationship = foundFrom
-								.createRelationshipTo(foundTo, RelTypes.Sim);
-						relationship.setProperty("weight",
-								Double.parseDouble(s[j + 1]));
-						i++;
-					} else {
-						System.out.println("fromID:" + fromID + " toID" + toID);
-					}
-					if (i % 100000 == 0) {
-						System.out.println(i);
-					}
-				}
-
-			}
-			bin.close();
-		} catch (Exception e) {
-			System.out.println(readline);
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * add keyword similarity wiki with indexing
-	 */
-	public static void addKeywordSimWikiRelations() {
-		String readline = "";
-		try {
-			BufferedReader bin = new BufferedReader(new InputStreamReader(
-					new FileInputStream(filePath + File.separator
-							+ "keyword_wiki.dat")));
-			int i = 0;
-			while ((readline = bin.readLine()) != null) {
-				String s[] = readline.split(",");
-				String fromID = s[0];
-				for (int j = 1; j < s.length; j = j + 2) {
-					String toID = s[j];
-					Label fromlabel = DynamicLabel.label("keywords");
-					Label tolabel = DynamicLabel.label("wiki");
-					Node foundFrom = graphDb.findNode(fromlabel, "id", fromID);
-					Node foundTo = graphDb.findNode(tolabel, "id", toID);
-					if (foundFrom != null && foundTo != null) {
-						Relationship relationship = foundFrom
-								.createRelationshipTo(foundTo, RelTypes.Sim);
-						relationship.setProperty("weight",
-								Double.parseDouble(s[j + 1]));
-						i++;
-					} else {
-						System.out.println("fromID:" + fromID + " toID" + toID);
-					}
-					if (i % 100000 == 0) {
-						System.out.println(i);
-					}
-				}
-
-			}
-			bin.close();
-		} catch (Exception e) {
-			System.out.println(readline);
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * add keyword similarity slides with indexing
-	 */
-	public static void addPaperSimSlidesRelations() {
-		String readline = "";
-		try {
-			BufferedReader bin = new BufferedReader(new InputStreamReader(
-					new FileInputStream(filePath + File.separator
-							+ "slides.txt")));
-			int i = 0;
-			while ((readline = bin.readLine()) != null) {
-				String s[] = readline.split(",");
-				String fromID = "P_" + s[0];
-				for (int j = 1; j < s.length; j = j + 2) {
-					String toID = "Res_" + s[j];
-					Label fromlabel = DynamicLabel.label("paper");
-					Label tolabel = DynamicLabel.label("slides");
-					Node foundFrom = graphDb.findNode(fromlabel, "id", fromID);
-					Node foundTo = graphDb.findNode(tolabel, "id", toID);
-					if (foundFrom != null && foundTo != null) {
-						Relationship relationship = foundFrom
-								.createRelationshipTo(foundTo, RelTypes.Sim);
-						relationship.setProperty("weight",
-								Double.parseDouble(s[j + 1]));
-						i++;
-					} else {
-						System.out.println("fromID:" + fromID + " toID" + toID);
-					}
-					if (i % 100000 == 0) {
-						System.out.println(i);
-					}
-				}
-			}
-			bin.close();
-		} catch (Exception e) {
-			System.out.println(readline);
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * add keyword similarity sourcecode with indexing
-	 */
-	public static void addPaperSimSourcecodeRelations() {
-		String readline = "";
-		try {
-			BufferedReader bin = new BufferedReader(new InputStreamReader(
-					new FileInputStream(filePath + File.separator
-							+ "sourcecode.txt")));
-			int i = 0;
-			while ((readline = bin.readLine()) != null) {
-				String s[] = readline.split(",");
-				String fromID = "P_" + s[0];
-				for (int j = 1; j < s.length; j = j + 2) {
-					String toID = "Res_" + s[j];
-					Label fromlabel = DynamicLabel.label("paper");
-					Label tolabel = DynamicLabel.label("sourcecode");
-					Node foundFrom = graphDb.findNode(fromlabel, "id", fromID);
-					Node foundTo = graphDb.findNode(tolabel, "id", toID);
-					if (foundFrom != null && foundTo != null) {
-						Relationship relationship = foundFrom
-								.createRelationshipTo(foundTo, RelTypes.Sim);
-						relationship.setProperty("weight",
-								Double.parseDouble(s[j + 1]));
-						i++;
-					} else {
-						System.out.println("fromID:" + fromID + " toID" + toID);
-					}
-					if (i % 100000 == 0) {
-						System.out.println(i);
-					}
-				}
-
-			}
-			bin.close();
-		} catch (Exception e) {
-			System.out.println(readline);
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * add keyword similarity video with indexing
-	 */
-	public static void addPaperSimVideoRelations() {
-		String readline = "";
-		try {
-			BufferedReader bin = new BufferedReader(
-					new InputStreamReader(new FileInputStream(filePath
-							+ File.separator + "video.txt")));
-			int i = 0;
-			while ((readline = bin.readLine()) != null) {
-				String s[] = readline.split(",");
-				String fromID = "P_" + s[0];
-				for (int j = 1; j < s.length; j = j + 2) {
-					String toID = "Res_" + s[j];
-					Label fromlabel = DynamicLabel.label("paper");
-					Label tolabel = DynamicLabel.label("video");
-					Node foundFrom = graphDb.findNode(fromlabel, "id", fromID);
-					Node foundTo = graphDb.findNode(tolabel, "id", toID);
-					if (foundFrom != null && foundTo != null) {
-						Relationship relationship = foundFrom
-								.createRelationshipTo(foundTo, RelTypes.Sim);
-						relationship.setProperty("weight",
-								Double.parseDouble(s[j + 1]));
-						i++;
-					} else {
-						System.out.println("fromID:" + fromID + " toID" + toID);
-					}
-					if (i % 100000 == 0) {
-						System.out.println(i);
-					}
-				}
-
-			}
-			bin.close();
-		} catch (Exception e) {
-			System.out.println(readline);
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * add keyword similarity wiki with indexing
-	 */
-	public static void addPaperSimWikiRelations() {
-		String readline = "";
-		try {
-			BufferedReader bin = new BufferedReader(
-					new InputStreamReader(new FileInputStream(filePath
-							+ File.separator + "wiki.txt")));
-			int i = 0;
-			while ((readline = bin.readLine()) != null) {
-				String s[] = readline.split(",");
-				String fromID = "P_" + s[0];
-				for (int j = 1; j < s.length; j = j + 2) {
-					String toID = "Res_" + s[j];
-					Label fromlabel = DynamicLabel.label("paper");
-					Label tolabel = DynamicLabel.label("wiki");
-					Node foundFrom = graphDb.findNode(fromlabel, "id", fromID);
-					Node foundTo = graphDb.findNode(tolabel, "id", toID);
-					if (foundFrom != null && foundTo != null) {
-						Relationship relationship = foundFrom
-								.createRelationshipTo(foundTo, RelTypes.Sim);
-						relationship.setProperty("weight",
-								Double.parseDouble(s[j + 1]));
-						i++;
-					} else {
-						System.out.println("fromID:" + fromID + " toID" + toID);
-					}
-					if (i % 100000 == 0) {
-						System.out.println(i);
-					}
-				}
-
-			}
-			bin.close();
-		} catch (Exception e) {
-			System.out.println(readline);
 			e.printStackTrace();
 		}
 	}
