@@ -105,18 +105,23 @@ public class CreateGraphDB {
 			tx.success();
 		}
 		
-		try (Transaction tx = graphDb.beginTx()) {
-			// Add resource relationship
-			System.out.println("adding wiki link relations...");
-			addWikiLinkRelations();
-			tx.success();
+		int total = countWikiLinkRelations();
+		
+		int num = 0;
+		while(num<=total){
+			try (Transaction tx = graphDb.beginTx()) {
+				// Add resource relationship
+				System.out.println("adding wiki link relations...");
+				num = addWikiLinkRelations(num);
+				tx.success();
+			}
 		}
 
 		// create formula index
 		IndexDefinition formula_indexDefinition;
 		try (Transaction tx = graphDb.beginTx()) {
 			Schema schema = graphDb.schema();
-			// keyword
+			// formula
 			formula_indexDefinition = schema
 					.indexFor(DynamicLabel.label("formula")).on("id").create();
 			//schema.awaitIndexOnline(keyword_indexDefinition, 10,TimeUnit.SECONDS);
@@ -125,7 +130,7 @@ public class CreateGraphDB {
 		}
 
 		try (Transaction tx = graphDb.beginTx()) {
-			// Add keywords
+			// Add formula
 			System.out.println("adding formula...");
 			addFormulaNodesWithIndexing();
 
@@ -136,17 +141,21 @@ public class CreateGraphDB {
 			// Add relationship
 			System.out.println("adding formula wiki relations...");
 			addFormulaWikiRelations();
-
 			tx.success();
 		}
 		
-		try (Transaction tx = graphDb.beginTx()) {
-			// Add relationship
-			System.out.println("adding formula formula co_occurrence relations...");
-			addFormulaCoFormulaRelations();
+		total = countFormulaCoFormulaRelations();
+		num = 0;
+		while(num<=total){
+			try (Transaction tx = graphDb.beginTx()) {
+				// Add relationship
+				System.out.println("adding formula formula co_occurrence relations...");
+				num = addFormulaCoFormulaRelations(num);
 
-			tx.success();
+				tx.success();
+			}
 		}
+		
 
 		// END SNIPPET: transaction
 	}
@@ -218,7 +227,8 @@ public class CreateGraphDB {
 						System.out.println(i);
 					}
 				}else{
-					System.out.println(id);
+					
+					System.out.println(id+","+title);
 				}
 				
 			}
@@ -240,30 +250,35 @@ public class CreateGraphDB {
 							+ "wiki_categories.dat")));
 			int i = 0;
 			while ((readline = bin.readLine()) != null) {
-				String s[] = readline.split(",");
-				String fromID = "W_" + s[0];
-				String toID = "W_" + s[1];
-				Label label = DynamicLabel.label("wiki");
-				Node foundFrom = graphDb.findNode(label, "id", fromID);
-				Node foundTo = graphDb.findNode(label, "id", toID);
-				if (foundFrom != null && foundTo != null) {
-					Relationship relationship = foundFrom.createRelationshipTo(
-							foundTo, RelTypes.Category);
-					relationship
-							.setProperty("weight", Double.parseDouble(s[2]));
-					i++;
-				} else {
-					if(foundFrom!=null){
-						System.out.println("fromID:" + fromID);
+				try {
+					String s[] = readline.split(",");
+					String fromID = "W_" + s[0];
+					String toID = "W_" + s[1];
+					Label label = DynamicLabel.label("wiki");
+					Node foundFrom = graphDb.findNode(label, "id", fromID);
+					Node foundTo = graphDb.findNode(label, "id", toID);
+					if (foundFrom != null && foundTo != null) {
+						Relationship relationship = foundFrom.createRelationshipTo(
+								foundTo, RelTypes.Category);
+						relationship
+								.setProperty("weight", Double.parseDouble(s[2]));
+						i++;
+					} else {
+						if(foundFrom!=null){
+							System.out.println("fromID:" + fromID);
+						}
+						if(toID!=null){
+							System.out.println("toID" + toID);
+						}
+						//System.out.println("fromID:" + fromID + " toID" + toID);
 					}
-					if(toID!=null){
-						System.out.println("toID" + toID);
-					}
-					System.out.println("fromID:" + fromID + " toID" + toID);
-				}
 
-				if (i % 100000 == 0) {
-					System.out.println(i);
+					if (i % 100000 == 0) {
+						System.out.println(i);
+					}
+				} catch (Exception e) {
+					System.out.println(readline);
+					e.printStackTrace();
 				}
 			}
 			bin.close();
@@ -274,44 +289,83 @@ public class CreateGraphDB {
 
 	}
 	
+	
 	/**
-	 * add Wikipedia link relation
+	 * count Wikipedia link relation
 	 */
-	public static void addWikiLinkRelations() {
+	public static int countWikiLinkRelations() {
 		String readline = "";
+		int count =0;
 		try {
 			BufferedReader bin = new BufferedReader(new InputStreamReader(
 					new FileInputStream(filePath + File.separator
 							+ "wiki_links.dat")));
-
-			int i = 0;
 			while ((readline = bin.readLine()) != null) {
-				String s[] = readline.split(",");
-				String fromID = "W_" + s[0];
-				String toID = "W_" + s[1];
-				Label label = DynamicLabel.label("wiki");
-				Node foundFrom = graphDb.findNode(label, "id", fromID);
-				Node foundTo = graphDb.findNode(label, "id", toID);
-				if (foundFrom != null && foundTo != null) {
-					Relationship relationship = foundFrom.createRelationshipTo(
-							foundTo, RelTypes.Link);
-					relationship
-							.setProperty("weight", Double.parseDouble(s[2]));
-					i++;
-				} else {
-					System.out.println("fromID:" + fromID + " toID" + toID);
-				}
-
-				if (i % 100000 == 0) {
-					System.out.println(i);
-				}
+				count++;
 			}
 			bin.close();
 		} catch (Exception e) {
 			System.out.println(readline);
 			e.printStackTrace();
 		}
-
+    	return count;
+	}
+	
+	/**
+	 * add Wikipedia link relation
+	 */
+	public static int addWikiLinkRelations(int num) {
+		String readline = "";
+		int i = 0;
+		int count =0;
+		try {
+			BufferedReader bin = new BufferedReader(new InputStreamReader(
+					new FileInputStream(filePath + File.separator
+							+ "wiki_links.dat")));
+			while ((readline = bin.readLine()) != null) {
+				if(i>=num){
+					try {
+						String s[] = readline.split(",");
+						String fromID = "W_" + s[0];
+						String toID = "W_" + s[1];
+						Label label = DynamicLabel.label("wiki");
+						Node foundFrom = graphDb.findNode(label, "id", fromID);
+						Node foundTo = graphDb.findNode(label, "id", toID);
+						if (foundFrom != null && foundTo != null) {
+							Relationship relationship = foundFrom.createRelationshipTo(
+									foundTo, RelTypes.Link);
+							relationship
+									.setProperty("weight", Double.parseDouble(s[2]));
+						} else {
+							if(foundFrom==null){
+								System.out.println("fromID:" + fromID);
+							}
+							if(foundTo==null){
+								System.out.println("toID:" + toID);
+							}
+							//System.out.println("fromID:" + fromID + " toID" + toID);
+						}
+					} catch (Exception e) {
+						System.out.println(readline);
+						e.printStackTrace();
+					}
+				    count++;
+				    if(count==200000){
+				    	i++;
+				    	num = i+1;
+				    	bin.close();
+				    	return num;
+				    }
+				}
+				i++;
+			}
+			bin.close();
+		} catch (Exception e) {
+			System.out.println(readline);
+			e.printStackTrace();
+		}
+		num = i+1;
+    	return num;
 	}
 
 	/**
@@ -354,19 +408,35 @@ public class CreateGraphDB {
 			String readline = "";
 			int i = 0;
 			while ((readline = bin.readLine()) != null) {
-				String s[] = readline.split(",");
-				String fromID = "F_" + s[0];
-				String toID = "W_"+s[1];
-				Label wiki_label = DynamicLabel.label("wiki");
-				Label f_label = DynamicLabel.label("formula");
-				Node foundFrom = graphDb.findNode(f_label, "id", fromID);
-				Node foundTo = graphDb.findNode(wiki_label, "id", toID);
-				Relationship relationship = foundFrom.createRelationshipTo(
-						foundTo, RelTypes.In);
-				relationship.setProperty("weight", Double.parseDouble(s[2]));
-				i++;
-				if (i % 100000 == 0) {
-					System.out.println(i);
+				try {
+					String s[] = readline.split(",");
+					String fromID = "F_" + s[0];
+					String toID = "W_"+s[1];
+					Label wiki_label = DynamicLabel.label("wiki");
+					Label f_label = DynamicLabel.label("formula");
+					Node foundFrom = graphDb.findNode(f_label, "id", fromID);
+					Node foundTo = graphDb.findNode(wiki_label, "id", toID);
+					if (foundFrom != null && foundTo != null) {
+						Relationship relationship = foundFrom.createRelationshipTo(
+								foundTo, RelTypes.In);
+						relationship.setProperty("weight", Double.parseDouble(s[2]));
+						i++;
+						if (i % 100000 == 0) {
+							System.out.println(i);
+						}
+					} else {
+						if(foundFrom==null){
+							System.out.println("fromID:" + fromID);
+						}
+						if(foundTo==null){
+							System.out.println("toID:" + toID);
+						}
+						System.out.println("fromID:" + fromID + " toID" + toID);
+					}
+					
+				} catch (Exception e) {
+					System.out.println(readline);
+					e.printStackTrace();
 				}
 			}
 			bin.close();
@@ -376,34 +446,86 @@ public class CreateGraphDB {
 	}
 	
 	/**
+	 * count Formula Co Formula link relation
+	 */
+	public static int countFormulaCoFormulaRelations() {
+		String readline = "";
+		int count =0;
+		try {
+			BufferedReader bin = new BufferedReader(new InputStreamReader(
+					new FileInputStream(filePath + File.separator
+							+ "fcof.dat")));
+			while ((readline = bin.readLine()) != null) {
+				count++;
+			}
+			bin.close();
+		} catch (Exception e) {
+			System.out.println(readline);
+			e.printStackTrace();
+		}
+    	return count;
+	}
+	
+	/**
 	 * add Formula Co Formula
 	 */
-	public static void addFormulaCoFormulaRelations() {
+	public static int addFormulaCoFormulaRelations(int num) {
+		int i = 0;
+		int count =0;
 		try {
 			BufferedReader bin = new BufferedReader(new InputStreamReader(
 					new FileInputStream(filePath + File.separator
 							+ "fcof.dat")));
 			String readline = "";
-			int i = 0;
 			while ((readline = bin.readLine()) != null) {
-				String s[] = readline.split(",");
-				String fromID = "F_" + s[0];
-				String toID = "F_"+s[1];
-				Label f_label = DynamicLabel.label("formula");
-				Node foundFrom = graphDb.findNode(f_label, "id", fromID);
-				Node foundTo = graphDb.findNode(f_label, "id", toID);
-				Relationship relationship = foundFrom.createRelationshipTo(
-						foundTo, RelTypes.Co_occurrence);
-				relationship.setProperty("weight", Double.parseDouble(s[2]));
-				i++;
-				if (i % 100000 == 0) {
-					System.out.println(i);
+				if(i>=num){
+					try{
+						String s[] = readline.split(",");
+						String fromID = "F_" + s[0];
+						String toID = "F_"+s[1];
+						Label f_label = DynamicLabel.label("formula");
+						Node foundFrom = graphDb.findNode(f_label, "id", fromID);
+						Node foundTo = graphDb.findNode(f_label, "id", toID);
+						
+						if (foundFrom != null && foundTo != null) {
+							Relationship relationship = foundFrom.createRelationshipTo(
+									foundTo, RelTypes.Co_occurrence);
+							relationship.setProperty("weight", Double.parseDouble(s[2]));
+							
+							if (i % 100000 == 0) {
+								System.out.println(i);
+							}
+						} else {
+							if(foundFrom==null){
+								System.out.println("fromID:" + fromID);
+							}
+							if(foundTo==null){
+								System.out.println("toID:" + toID);
+							}
+							//System.out.println("fromID:" + fromID + " toID" + toID);
+						}
+						
+						
+					} catch (Exception e) {
+						System.out.println(readline);
+						e.printStackTrace();
+					}
+				    count++;
+				    if(count==200000){
+				    	i++;
+				    	num = i+1;
+				    	bin.close();
+				    	return num;
+				    }
 				}
+				i++;
 			}
 			bin.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		num = i+1;
+    	return num;
 	}
 
 }
